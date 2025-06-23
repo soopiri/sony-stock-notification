@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  sony-stock-monitor:
+    build: 
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: sony-stock-monitor
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+    env_file:
+      - ../.env
+    volumes:
+      - ../logs:/app/logs
+      - ../src:/app/src:ro
+    working_dir: /app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.path.append('/app'); from src.discord_notifier import DiscordNotifier; print('Health check passed')" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    networks:
+      - sony-monitor-network
+
+networks:
+  sony-monitor-network:
+    driver: bridge
