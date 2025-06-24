@@ -46,6 +46,23 @@ class TestSender:
         else:
             print("❌ 재고 있음 테스트 메시지 발송 실패!")
             
+    def send_timezone_test(self):
+        """타임존 테스트 메시지 발송"""
+        import time
+        
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timezone_info = time.tzname
+        
+        message = f"🕐 **[타임존 테스트]** 🕐\n⏰ 현재 시간: {current_time}\n🌏 타임존: {timezone_info}\n\n⚠️ 이것은 테스트 메시지입니다."
+        
+        print("📤 타임존 테스트 메시지를 발송합니다...")
+        success = self.notifier.send_message(message)
+        
+        if success:
+            print("✅ 타임존 테스트 메시지 발송 성공!")
+        else:
+            print("❌ 타임존 테스트 메시지 발송 실패!")
+            
         return success
         
     def send_out_of_stock_test(self):
@@ -204,6 +221,7 @@ def main():
     parser.add_argument('--actual-check', action='store_true', help='실제 재고 확인 후 메시지 발송')
     parser.add_argument('--embed', action='store_true', help='Embed 테스트 메시지 발송')
     parser.add_argument('--notification-mode', action='store_true', help='알림 모드 테스트 메시지 발송')
+    parser.add_argument('--timezone', action='store_true', help='타임존 테스트 메시지 발송')
     parser.add_argument('--custom', type=str, help='사용자 정의 메시지 발송')
     parser.add_argument('--all', action='store_true', help='모든 테스트 메시지 발송')
     
@@ -238,6 +256,9 @@ def main():
         if args.notification_mode or args.all:
             sender.send_notification_mode_test()
             
+        if args.timezone or args.all:
+            sender.send_timezone_test()
+            
         if args.custom:
             sender.send_custom_message(args.custom)
             
@@ -262,11 +283,12 @@ def interactive_mode():
             print("5. 실제 재고 확인 후 메시지")
             print("6. Embed 테스트 메시지")
             print("7. 알림 모드 테스트 메시지")
-            print("8. 사용자 정의 메시지")
-            print("9. 모든 테스트 메시지 발송")
-            print("10. 종료")
+            print("8. 타임존 테스트 메시지")
+            print("9. 사용자 정의 메시지")
+            print("10. 모든 테스트 메시지 발송")
+            print("11. 종료")
             
-            choice = input("\n선택하세요 (1-10): ").strip()
+            choice = input("\n선택하세요 (1-11): ").strip()
             
             if choice == '1':
                 sender.send_stock_available_test()
@@ -283,12 +305,14 @@ def interactive_mode():
             elif choice == '7':
                 sender.send_notification_mode_test()
             elif choice == '8':
+                sender.send_timezone_test()
+            elif choice == '9':
                 custom_msg = input("발송할 메시지를 입력하세요: ")
                 if custom_msg.strip():
                     sender.send_custom_message(custom_msg)
                 else:
                     print("❌ 메시지가 비어있습니다.")
-            elif choice == '9':
+            elif choice == '10':
                 print("🚀 모든 테스트 메시지를 발송합니다...")
                 sender.send_stock_available_test()
                 sender.send_out_of_stock_test()
@@ -297,7 +321,8 @@ def interactive_mode():
                 sender.send_actual_stock_check()
                 sender.send_embed_test()
                 sender.send_notification_mode_test()
-            elif choice == '10':
+                sender.send_timezone_test()
+            elif choice == '11':
                 print("👋 종료합니다.")
                 break
             else:

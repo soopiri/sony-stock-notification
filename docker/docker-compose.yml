@@ -10,11 +10,13 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
+      - TZ=Asia/Seoul
     env_file:
       - ../.env
     volumes:
       - ../logs:/app/logs
       - ../src:/app/src:ro
+      - /etc/localtime:/etc/localtime:ro
     working_dir: /app
     healthcheck:
       test: ["CMD", "python", "-c", "import sys; sys.path.append('/app'); from src.discord_notifier import DiscordNotifier; print('Health check passed')" ]

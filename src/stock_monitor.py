@@ -1,8 +1,10 @@
+import os
 import time
 import logging
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
@@ -30,7 +32,20 @@ class StockMonitor:
             chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
             chrome_options.add_experimental_option('useAutomationExtension', False)
             
-            self.driver = webdriver.Chrome(options=chrome_options)
+            # Chrome 바이너리 경로 설정 (Docker 환경 지원)
+            chrome_bin = os.getenv('CHROME_BIN')
+            if chrome_bin and os.path.exists(chrome_bin):
+                chrome_options.binary_location = chrome_bin
+                logger.info(f"Chrome 바이너리 경로 설정: {chrome_bin}")
+            
+            # ChromeDriver 경로 설정
+            chromedriver_path = os.getenv('CHROMEDRIVER_PATH')
+            if chromedriver_path and os.path.exists(chromedriver_path):
+                self.driver = webdriver.Chrome(service=Service(chromedriver_path), options=chrome_options)
+                logger.info(f"ChromeDriver 경로 설정: {chromedriver_path}")
+            else:
+                self.driver = webdriver.Chrome(options=chrome_options)
+            
             self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             
             logger.info("Chrome WebDriver 설정 완료")
