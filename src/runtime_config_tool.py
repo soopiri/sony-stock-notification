@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """
-런타임 설정 변경 도구
+런타임 설정 변경 도구 (수정됨)
 - 실행 중인 서비스의 설정을 동적으로 변경
 - JSON 파일을 통한 설정 업데이트
+- 설정 변경 후 강제 리로드 기능 추가
 """
 
 import os
 import sys
 import json
 import argparse
+import signal
 from datetime import datetime
 
 # 프로젝트 루트 디렉토리를 Python 경로에 추가
@@ -41,6 +43,29 @@ def show_current_config():
     for key, value in current_config.items():
         print(f"{key}: {value}")
     print("-" * 50)
+
+def trigger_config_reload():
+    """메인 프로세스에 설정 리로드 신호 전송"""
+    try:
+        # 실행 중인 메인 프로세스 찾기
+        import subprocess
+        result = subprocess.run(['pgrep', '-f', 'src/main.py'], capture_output=True, text=True)
+        
+        if result.returncode == 0 and result.stdout.strip():
+            pid = int(result.stdout.strip().split('\n')[0])
+            print(f"🔄 메인 프로세스 (PID: {pid})에 리로드 신호 전송...")
+            
+            # SIGUSR1 신호로 설정 리로드 요청
+            os.kill(pid, signal.SIGUSR1)
+            print("✅ 설정 리로드 신호 전송 완료")
+            return True
+        else:
+            print("⚠️ 실행 중인 메인 프로세스를 찾을 수 없습니다")
+            return False
+            
+    except Exception as e:
+        print(f"⚠️ 설정 리로드 신호 전송 실패: {str(e)}")
+        return False
 
 def update_notification_mode(mode):
     """알림 모드 변경"""
@@ -79,6 +104,11 @@ def update_notification_mode(mode):
         final_mode = config_manager.get_config('NOTIFICATION_MODE')
         print(f"🔄 최종 ConfigManager 설정: {final_mode}")
         
+        # 메인 프로세스에 리로드 신호 전송
+        reload_success = trigger_config_reload()
+        if not reload_success:
+            print("💡 수동으로 컨테이너를 재시작하세요: docker restart sony-stock-monitor")
+        
     else:
         print("❌ 알림 모드 변경 실패")
     return success
@@ -96,6 +126,7 @@ def update_check_interval(minutes):
         
         if success:
             print(f"✅ 체크 주기 변경: {minutes}분")
+            trigger_config_reload()
         else:
             print("❌ 체크 주기 변경 실패")
         return success
@@ -121,6 +152,7 @@ def update_health_check_times(times):
     
     if success:
         print(f"✅ 헬스체크 시간 변경: {times}")
+        trigger_config_reload()
     else:
         print("❌ 헬스체크 시간 변경 실패")
     return success
@@ -145,9 +177,25 @@ def update_website_info(url, selector):
         print(f"✅ 웹사이트 정보 변경:")
         print(f"   URL: {url}")
         print(f"   Selector: {selector}")
+        trigger_config_reload()
     else:
         print("❌ 웹사이트 정보 변경 실패")
     return success
+
+def force_reload_config():
+    """강제로 설정 리로드"""
+    print("🔄 설정을 강제로 리로드합니다...")
+    config_manager = get_config_manager()
+    
+    # runtime_config.json이 있으면 다시 로드
+    runtime_config = config_manager.load_runtime_config()
+    if runtime_config:
+        print("✅ 런타임 설정 리로드 완료")
+        trigger_config_reload()
+        return True
+    else:
+        print("⚠️ 런타임 설정 파일이 없거나 로드 실패")
+        return False
 
 def interactive_mode():
     """대화형 설정 변경"""
@@ -163,9 +211,10 @@ def interactive_mode():
         print("3. 헬스체크 시간 변경")
         print("4. 웹사이트 정보 변경")
         print("5. 설정 초기화 (.env 파일로)")
-        print("6. 종료")
+        print("6. 강제 설정 리로드")
+        print("7. 종료")
         
-        choice = input("\n선택하세요 (1-6): ").strip()
+        choice = input("\n선택하세요 (1-7): ").strip()
         
         if choice == '1':
             print("\n알림 모드:")
@@ -208,8 +257,12 @@ def interactive_mode():
             if confirm == 'y':
                 config_manager.reset_to_env_file()
                 print("✅ 설정이 .env 파일로 초기화되었습니다")
+                trigger_config_reload()
                 
         elif choice == '6':
+            force_reload_config()
+            
+        elif choice == '7':
             print("👋 종료합니다.")
             break
         else:
@@ -224,6 +277,7 @@ def main():
     parser.add_argument('--url', type=str, help='모니터링 URL 변경')
     parser.add_argument('--selector', type=str, help='CSS Selector 변경')
     parser.add_argument('--reset', action='store_true', help='설정 초기화')
+    parser.add_argument('--reload', action='store_true', help='강제 설정 리로드')
     
     args = parser.parse_args()
     
@@ -253,6 +307,10 @@ def main():
         config_manager = get_config_manager()
         config_manager.reset_to_env_file()
         print("✅ 설정이 초기화되었습니다")
+        trigger_config_reload()
+        
+    if args.reload:
+        force_reload_config()
 
 if __name__ == "__main__":
     main()
