@@ -1,5 +1,5 @@
 """
-Sony 재고 모니터링 서비스
+Sony 재고 모니터링 서비스 by soopiri
 
 이 패키지는 Sony 공식 홈페이지의 제품 재고를 실시간으로 모니터링하고
 Discord 채널로 알림을 보내는 서비스를 제공합니다.
@@ -12,8 +12,8 @@ Discord 채널로 알림을 보내는 서비스를 제공합니다.
 """
 
 __version__ = "1.0.0"
-__author__ = "Sony Stock Monitor Team"
-__email__ = "support@example.com"
+__author__ = "soopiri"
+__email__ = "soopiri.jay@gmail.com"
 
 from .stock_monitor import StockMonitor
 from .discord_notifier import DiscordNotifier

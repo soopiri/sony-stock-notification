@@ -45,6 +45,17 @@ def create_env_file():
     if not health_check_times:
         health_check_times = "09:00,12:00,15:00,18:00,21:00,00:00"
     
+    # 알림 모드 설정
+    print("\n📢 알림 모드를 선택하세요:")
+    print("1. stock_available_only - 재고가 있을 때만 알림 (기본값)")
+    print("2. always - 매번 체크할 때마다 알림 (재고 있음/품절 모두)")
+    
+    notification_choice = input("선택하세요 (1-2, 기본값: 1): ").strip()
+    if notification_choice == "2":
+        notification_mode = "always"
+    else:
+        notification_mode = "stock_available_only"
+    
     # .env 파일 생성
     env_content = f"""# Sony 제품 페이지 URL
 WEBSITE_URL={website_url}
@@ -60,12 +71,18 @@ DISCORD_WEBHOOK_URL={discord_webhook}
 
 # 헬스체크 시간 (쉼표로 구분, 24시간 형식)
 HEALTH_CHECK_TIMES={health_check_times}
+
+# 알림 조건 설정
+# - stock_available_only: 재고가 있을 때만 알림 (기본값)
+# - always: 매번 체크할 때마다 알림 (재고 있음/품절 모두)
+NOTIFICATION_MODE={notification_mode}
 """
     
     with open('.env', 'w', encoding='utf-8') as f:
         f.write(env_content)
     
     print("✅ .env 파일이 생성되었습니다.")
+    print(f"📋 설정된 알림 모드: {notification_mode}")
     return True
 
 def test_discord_webhook():

@@ -1,4 +1,45 @@
-# Sony 재고 모니터링 서비스
+### 환경 변수 설정
+
+`.env` 파일에서 다음 값들을 설정하세요:
+
+```bash
+# Sony 제품 페이지 URL
+WEBSITE_URL=https://www.sony.co.kr/electronics/product/example
+
+# 재고 상태를 확인할 CSS Selector
+STOCK_SELECTOR=.stock-status
+
+# 재고 확인 주기 (분 단위)
+CHECK_INTERVAL_MINUTES=3
+
+# Discord Webhook URL
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN
+
+# 헬스체크 시간 (쉼표로 구분, 24시간 형식)
+HEALTH_CHECK_TIMES=09:00,12:00,15:00,18:00,21:00,00:00
+
+# 알림 조건 설정
+# - stock_available_only: 재고가 있을 때만 알림 (기본값)
+# - always: 매번 체크할 때마다 알림 (재고 있음/품절 모두)
+NOTIFICATION_MODE=stock_available_only
+```
+
+## 📢 알림 모드 설명
+
+### 간단한 두 가지 모드만
+
+| 모드 | 설명 | 사용 예시 |
+|------|------|-----------|
+| `stock_available_only` | 재고가 있을 때만 알림 (기본값) | 재고 확보가 중요할 때 |
+| `always` | 매번 체크시마다 현재 상태 알림 | 지속적인 상태 확인이 필요할 때 |
+
+### 알림 예시
+
+#### stock_available_only 모드
+```
+🟢 **재고 있음!** 🟢
+⏰ 2025-06-23 14:30:15
+🔗 https://www.sony.co.kr/electronics/product/# Sony 재고 모니터링 서비스
 
 Sony 공식 홈페이지의 제품 재고를 실시간으로 모니터링하고 Discord 채널로 알림을 보내는 Python 서비스입니다.
 
@@ -108,6 +149,46 @@ DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOO
 
 # 헬스체크 시간 (쉼표로 구분, 24시간 형식)
 HEALTH_CHECK_TIMES=09:00,12:00,15:00,18:00,21:00,00:00
+
+# 알림 조건 설정
+# - stock_available_only: 재고가 있을 때만 알림 (기본값)
+# - always: 매번 체크할 때마다 알림 (재고 있음/품절 모두)
+NOTIFICATION_MODE=stock_available_only
+
+# 중복 알림 방지 설정 (분 단위)
+# 같은 상태에 대해 중복 알림을 방지할 시간 간격
+DUPLICATE_PREVENTION_MINUTES=30
+```
+
+## 📢 알림 모드 설명
+
+### 간단한 두 가지 모드
+
+| 모드 | 설명 | 사용 예시 |
+|------|------|-----------|
+| `stock_available_only` | 재고가 있을 때만 알림 (기본값) | 재고 확보가 중요할 때 |
+| `always` | 매번 체크시마다 현재 상태 알림 | 지속적인 상태 확인이 필요할 때 |
+
+### 중복 방지 기능
+- `DUPLICATE_PREVENTION_MINUTES` 설정으로 같은 상태의 중복 알림 방지
+- 설정한 시간 간격 내 같은 상태 알림을 차단
+
+### 알림 예시
+
+#### stock_available_only 모드
+```
+🟢 **재고 있음!** 🟢
+⏰ 2025-06-23 14:30:15
+🔗 https://www.sony.co.kr/electronics/product/example
+📋 알림 모드: 재고 있을때만
+```
+
+#### always 모드
+```
+🔴 **품절** 🔴
+⏰ 2025-06-23 14:35:22
+🔗 https://www.sony.co.kr/electronics/product/example
+📋 알림 모드: 매번 확인시마다
 ```
 
 ## 🧪 테스트 및 모니터링
@@ -139,6 +220,9 @@ python src/test_sender.py --out-of-stock
 
 # 실제 재고 확인
 python src/test_sender.py --actual-check
+
+# 알림 모드 테스트
+python src/test_sender.py --notification-mode
 
 # 모든 테스트
 python src/test_sender.py --all
